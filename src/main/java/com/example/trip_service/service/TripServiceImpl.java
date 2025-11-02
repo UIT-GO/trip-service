@@ -42,6 +42,7 @@ public class TripServiceImpl implements TripService {
         createTripEvent.setLongitude(tripRequest.getLongitude());
         createTripEvent.setOrigin(tripRequest.getOrigin());
         createTripEvent.setUserId(tripRequest.getUserId());
+        createTripEvent.setTripId(trip.getId());
 
         String json = new ObjectMapper().writeValueAsString(createTripEvent);
         kafkaTemplate.send(TRIP_CREATED_TOPIC, json);
