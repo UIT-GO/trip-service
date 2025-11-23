@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(
-        name = "user-service",
-        url = "http://localhost:3030",
+        name = "auth-service",
+        url = "http://auth-service:3030",
         path = "/api/users",
         configuration = FeignConfig.class
 )
