@@ -29,6 +29,7 @@ public class AcceptTripListener {
 
             trip.setDriverId(acceptTripEvent.getDriverId());
             trip.setStatus(TripStatus.ACCEPTED);
+            tripRepository.save(trip);
         } catch (Exception e) {
             e.printStackTrace();
         }
