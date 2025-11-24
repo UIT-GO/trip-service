@@ -311,11 +311,56 @@ src/main/java/com/example/trip_service/
 4. **External Integration**: Add new Feign clients in `client/`
 5. **Event Handling**: Create listeners in `eventListener/`
 
+## CI/CD Pipeline
+
+This project uses GitHub Actions for automated building and deployment. The workflow is triggered manually and includes:
+
+### Workflow Features
+- ✅ **Automated Build**: Maven compilation and packaging
+- ✅ **Docker Integration**: Automatic Docker image creation
+- ✅ **Registry Push**: Pushes images to Docker Hub
+- ✅ **Java 17 Setup**: Ensures consistent build environment
+
+### Pipeline Stages
+
+1. **Code Checkout**: Gets latest source code
+2. **Java Setup**: Configures JDK 17 (Temurin distribution)
+3. **Maven Build**: Compiles and packages the application
+4. **Docker Login**: Authenticates with Docker Hub
+5. **Image Build**: Creates Docker image with latest tag
+6. **Image Push**: Publishes to Docker Hub registry
+
+### Triggering the Workflow
+
+The CI/CD pipeline can be triggered manually:
+
+1. Go to the **Actions** tab in your GitHub repository
+2. Select the **build** workflow
+3. Click **Run workflow** button
+4. Choose the branch and click **Run workflow**
+
+### Required Secrets
+
+Configure these secrets in your GitHub repository settings:
+
+```
+DOCKERHUB_USERNAME - Your Docker Hub username
+DOCKERHUB_TOKEN    - Your Docker Hub access token
+```
+
+### Accessing Built Images
+
+After successful pipeline execution, Docker images are available at:
+```
+docker pull <dockerhub-username>/trip-service:latest
+```
+
 ## Deployment
 
-### Docker (Optional)
+### Local Docker Deployment
 
-Create a `Dockerfile`:
+The project includes a Dockerfile for containerization:
+
 ```dockerfile
 FROM openjdk:17-jdk-slim
 COPY target/trip-service-0.0.1-SNAPSHOT.jar app.jar
@@ -323,10 +368,25 @@ EXPOSE 3032
 ENTRYPOINT ["java", "-jar", "/app.jar"]
 ```
 
-Build and run:
+Build and run locally:
 ```powershell
 docker build -t trip-service .
 docker run -p 3032:3032 trip-service
+```
+
+### Production Deployment
+
+Use the image from the CI/CD pipeline:
+```powershell
+# Pull the latest image
+docker pull <dockerhub-username>/trip-service:latest
+
+# Run with environment variables
+docker run -p 3032:3032 `
+  -e MONGODB_URI="mongodb://your-mongo-cluster/trip-db" `
+  -e KAFKA_SERVERS="your-kafka-cluster:9092" `
+  -e JWT_SECRET="your-secure-jwt-secret" `
+  <dockerhub-username>/trip-service:latest
 ```
 
 ## Troubleshooting
