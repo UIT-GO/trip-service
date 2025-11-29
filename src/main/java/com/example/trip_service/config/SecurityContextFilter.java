@@ -34,6 +34,12 @@ public class SecurityContextFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader(jwtProperties.getJwtHeader());
         String token = null;
 
+        String path = request.getServletPath();
+        if (path.startsWith("/actuator")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
 
