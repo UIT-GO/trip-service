@@ -18,12 +18,21 @@ public class TripServiceImpl implements TripService {
     private final TripRepository tripRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private static final String TRIP_CREATED_TOPIC = "trip_create_wait_driver";
+    private static final String TRIP_LOGS_TOPIC = "trip_logs";
     private final UserClient userClient;
 
     public TripServiceImpl(TripRepository tripRepository, KafkaTemplate<String, String> kafkaTemplate, UserClient userClient) {
         this.tripRepository = tripRepository;
         this.kafkaTemplate = kafkaTemplate;
         this.userClient = userClient;
+    }
+
+    private void logToKafka(String message) {
+        // Wrap the log message in JSON format with service_name and timestamp
+        String jsonLog = String.format("{\"message\":%s, \"service_name\":\"driver-service\", \"timestamp\":\"%s\"}",
+                new ObjectMapper().valueToTree(message).toString(),
+                java.time.Instant.now().toString());
+        kafkaTemplate.send(TRIP_LOGS_TOPIC, jsonLog);
     }
 
     @Override
@@ -34,7 +43,7 @@ public class TripServiceImpl implements TripService {
         trip.setOrigin(tripRequest.getOrigin());
         trip.setUserId(tripRequest.getUserId());
         tripRepository.save(trip);
-
+        logToKafka(String.format("Trip persisted: id=%s status=%s", trip.getId(), trip.getStatus()));
         //Create a trip created event and publish to kafka
         CreateTripEvent createTripEvent = new CreateTripEvent();
         createTripEvent.setDestination(tripRequest.getDestination());
@@ -45,7 +54,7 @@ public class TripServiceImpl implements TripService {
 
         String json = new ObjectMapper().writeValueAsString(createTripEvent);
         kafkaTemplate.send(TRIP_CREATED_TOPIC, json);
-
+        logToKafka(String.format("CreateTripEvent published: tripId=%s userId=%s topic=%s", trip.getId(), trip.getUserId(), TRIP_CREATED_TOPIC));
         return "Waiting for driver to accept the trip";
     }
 
@@ -54,6 +63,7 @@ public class TripServiceImpl implements TripService {
         Trip trip = tripRepository.findById(tripId).orElseThrow(
                 () -> new RuntimeException("Trip not found with id: " + tripId)
         );
+        logToKafka(String.format("Trip status fetched: id=%s status=%s", tripId, trip.getStatus()));
         return trip.getStatus().toString();
     }
 
@@ -72,7 +82,7 @@ public class TripServiceImpl implements TripService {
         UserDriverNameDTO userDriverNameDTO = userClient.getUserDriverName(trip.getUserId(), trip.getDriverId());
         tripResponse.setUserName(userDriverNameDTO.getUserName());
         tripResponse.setDriverName(userDriverNameDTO.getDriverName());
-
+        logToKafka(String.format("Trip details fetched: id=%s userId=%s driverId=%s status=%s", trip.getId(), trip.getUserId(), trip.getDriverId(), trip.getStatus()));
         return tripResponse;
     }
 
@@ -83,7 +93,7 @@ public class TripServiceImpl implements TripService {
         );
         trip.setStatus(status);
         tripRepository.save(trip);
-
+        logToKafka(String.format("Trip status updated: id=%s status=%s", tripId, status));
         return "Trip status updated to " + status;
     }
 }
