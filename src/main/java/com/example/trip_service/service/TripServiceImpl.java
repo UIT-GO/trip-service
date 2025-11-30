@@ -12,6 +12,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class TripServiceImpl implements TripService {
@@ -20,6 +22,7 @@ public class TripServiceImpl implements TripService {
     private static final String TRIP_CREATED_TOPIC = "trip_create_wait_driver";
     private static final String TRIP_LOGS_TOPIC = "trip_logs";
     private final UserClient userClient;
+    private static final Logger logger = LoggerFactory.getLogger(TripServiceImpl.class);
 
     public TripServiceImpl(TripRepository tripRepository, KafkaTemplate<String, String> kafkaTemplate, UserClient userClient) {
         this.tripRepository = tripRepository;
@@ -43,9 +46,9 @@ public class TripServiceImpl implements TripService {
         trip.setOrigin(tripRequest.getOrigin());
         trip.setUserId(tripRequest.getUserId());
 
-        System.out.println("Start saving trip to repository - time: " + java.time.Instant.now().toString());
+        logger.info("Start saving trip to repository - time: {}", java.time.Instant.now().toString());
         tripRepository.save(trip);
-        System.out.println("Finished saving trip to repository - time: " + java.time.Instant.now().toString());
+        logger.info("Finished saving trip to repository - time: {}", java.time.Instant.now().toString());
 
         logToKafka(String.format("Trip persisted: id=%s status=%s", trip.getId(), trip.getStatus()));
         //Create a trip created event and publish to kafka
