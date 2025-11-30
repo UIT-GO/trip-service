@@ -42,7 +42,11 @@ public class TripServiceImpl implements TripService {
         trip.setStatus(TripStatus.PENDING);
         trip.setOrigin(tripRequest.getOrigin());
         trip.setUserId(tripRequest.getUserId());
+
+        System.out.println("Start saving trip to repository - time: " + java.time.Instant.now().toString());
         tripRepository.save(trip);
+        System.out.println("Finished saving trip to repository - time: " + java.time.Instant.now().toString());
+
         logToKafka(String.format("Trip persisted: id=%s status=%s", trip.getId(), trip.getStatus()));
         //Create a trip created event and publish to kafka
         CreateTripEvent createTripEvent = new CreateTripEvent();
