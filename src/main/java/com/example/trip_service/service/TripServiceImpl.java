@@ -32,7 +32,7 @@ public class TripServiceImpl implements TripService {
 
     private void logToKafka(String message) {
         // Wrap the log message in JSON format with service_name and timestamp
-        String jsonLog = String.format("{\"message\":%s, \"service_name\":\"driver-service\", \"timestamp\":\"%s\"}",
+        String jsonLog = String.format("{\"message\":%s, \"service_name\":\"trip-service\", \"timestamp\":\"%s\"}",
                 new ObjectMapper().valueToTree(message).toString(),
                 java.time.Instant.now().toString());
         kafkaTemplate.send(TRIP_LOGS_TOPIC, jsonLog);
