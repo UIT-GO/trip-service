@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class CreateTripEvent {
+    private String tripId;
     private String userId;
     private String origin;
     private String destination;
